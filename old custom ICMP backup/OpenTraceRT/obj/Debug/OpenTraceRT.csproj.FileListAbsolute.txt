@@ -1,0 +1,16 @@
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\bin\Debug\OpenTraceRT.exe.config
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\bin\Debug\OpenTraceRT.exe
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\bin\Debug\OpenTraceRT.pdb
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.csprojResolveAssemblyReference.cache
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\MainWindow.g.cs
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\App.g.cs
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT_MarkupCompile.cache
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT_MarkupCompile.lref
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\MainWindow.baml
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.g.resources
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.Properties.Resources.resources
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.csproj.GenerateResource.Cache
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.exe
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.pdb
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\bin\Debug\ProtocolHeaderDefinition.dll
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\bin\Debug\ProtocolHeaderDefinition.pdb
