@@ -3,24 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Threading;
 using System.Diagnostics;
 using System.Security;
 using System.Security.Permissions;
-using System.Text.RegularExpressions;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Data;
 
@@ -258,6 +247,10 @@ namespace OpenTraceRT {
 
             ProcessStartInfo cmdStartInfo = new ProcessStartInfo("cmd.exe");
             cmdStartInfo.CreateNoWindow = true;
+
+            //TODO: Verify this process priviledge functions on win7 or if manifest works
+            //cmdStartInfo.Verb = "runas";
+
             cmdStartInfo.RedirectStandardInput = true;
             cmdStartInfo.RedirectStandardOutput = true;
             cmdStartInfo.UseShellExecute = false;
@@ -399,6 +392,8 @@ namespace OpenTraceRT {
 
             List<Thread> threadList = new List<Thread>();
 
+            var l = new object();
+
             for (int i = 0; i < routeList.Count; i++) {
 
                 if (token.IsCancellationRequested) {
@@ -414,13 +409,8 @@ namespace OpenTraceRT {
                     LatencyTester latencyTester = new LatencyTester();
                     tempItem = latencyTester.MakeRequest(tempHost, token);
 
-                    Monitor.TryEnter(tempData, 4000);
-
-                    try {
+                    lock (l) {
                         tempData.Add(tempItem);
-                    }
-                    finally {
-                        Monitor.Exit(tempData);                        
                     }
 
                 } );

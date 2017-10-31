@@ -81,13 +81,13 @@ namespace OpenTraceRT {
             if (IsRebuild) {
 
                 startDraw[0] = xOffset;
-                startDraw[1] = height * ((double)packetLoss / 100 );
+                startDraw[1] = height * ((double)packetLoss / 1000 );
             }
 
-            DrawLine(xOffset, height * ((double)packetLoss / 100));
+            DrawLine(xOffset, height * ((double)packetLoss / 1000) );
 
             startDraw[0] = xOffset;
-            startDraw[1] = height * ((double)packetLoss / 100);
+            startDraw[1] = height * ((double)packetLoss / 1000);
 
             if (offset == 0 || IsRebuild) {
 
