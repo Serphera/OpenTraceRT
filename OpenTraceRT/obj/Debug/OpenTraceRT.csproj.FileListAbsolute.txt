@@ -12,3 +12,4 @@ C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceR
 C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.csproj.GenerateResource.Cache
 C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.exe
 C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\OpenTraceRT.pdb
+C:\Users\petmor\Documents\DevOps\C#\OpenTraceRT\OpenTraceRT\obj\Debug\GeneratedInternalTypeHelper.g.cs

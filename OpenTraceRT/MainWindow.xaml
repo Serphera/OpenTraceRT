@@ -136,14 +136,14 @@
             VerticalAlignment="Stretch">
             
             <ScrollViewer HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Auto">
-                <Canvas x:Name="GraphCanvas" 
+                <local:CanvasAutoSize x:Name="GraphCanvas" 
                     Grid.Row="1"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
                         Loaded="SetCanvas"
                         Width="Auto"
                         Background="DarkGray">
-                </Canvas>
+                </local:CanvasAutoSize>
             </ScrollViewer>
 
         </Grid>

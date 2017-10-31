@@ -82,6 +82,7 @@
       <DependentUpon>App.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="CanvasAutoSize.cs" />
     <Compile Include="DataItem.cs" />
     <Compile Include="DataList.cs" />
     <Compile Include="Grapher.cs" />
