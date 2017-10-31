@@ -57,7 +57,7 @@ namespace OpenTraceRT {
 
 #if DEBUG
             AddPollCheckbox();
-
+            
             //Testing Values!
             //3 Jumps
             //ipInput.Text = "194.22.54.181";
@@ -124,7 +124,7 @@ namespace OpenTraceRT {
 
 
         private void startBtn_Click(object sender, RoutedEventArgs e) {
-            
+
             if (PatternChecker.IsValidIP(ipInput.Text)) {
 
                 if (!started && IsWoundDown) {
@@ -142,7 +142,7 @@ namespace OpenTraceRT {
                 }
 
                 if (IsWoundDown) {
-
+                    
                     ip = ipInput.Text;
                     token = source.Token;
                     string interval = GetInterval(pollInterval.Text);
@@ -364,6 +364,8 @@ namespace OpenTraceRT {
 
         private void TraceComplete(int interval, CancellationToken token) {
 
+            Thread.Sleep(5000);
+
             while (!IsTraceComplete && !token.IsCancellationRequested) {
 
                 Thread.Sleep(1000);
@@ -390,7 +392,7 @@ namespace OpenTraceRT {
 
         private void StartRoutePing(CancellationToken token) {
 
-            List<Thread> threadList = new List<Thread>();
+            List<Thread> threadList = new List<Thread>();            
 
             var l = new object();
 
@@ -444,6 +446,11 @@ namespace OpenTraceRT {
                     if (threadList[i].IsAlive == true) {
 
                         break;
+                    }
+                    else {
+
+                        threadList.RemoveAt(i);
+                        i--;
                     }
 
                     if (i == threadList.Count - 1) {
