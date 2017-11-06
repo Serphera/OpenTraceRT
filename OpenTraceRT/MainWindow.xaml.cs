@@ -454,6 +454,11 @@ namespace OpenTraceRT {
             try {
                 for (int i = 0; i < tempData.Count; i++) {
 
+                    if (token.IsCancellationRequested) {
+
+                        return;
+                    }
+
                     //if not right place
                     if (!tempData[i].hostname.Equals(routeList[i])) {
 
