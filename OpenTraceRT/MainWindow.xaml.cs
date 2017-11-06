@@ -248,9 +248,6 @@ namespace OpenTraceRT {
             ProcessStartInfo cmdStartInfo = new ProcessStartInfo("cmd.exe");
             cmdStartInfo.CreateNoWindow = true;
 
-            //TODO: Verify this process priviledge functions on win7 or if manifest works
-            //cmdStartInfo.Verb = "runas";
-
             cmdStartInfo.RedirectStandardInput = true;
             cmdStartInfo.RedirectStandardOutput = true;
             cmdStartInfo.UseShellExecute = false;
@@ -393,7 +390,7 @@ namespace OpenTraceRT {
         private void StartRoutePing(CancellationToken token) {
 
             List<Thread> threadList = new List<Thread>();            
-
+            
             var l = new object();
 
             for (int i = 0; i < routeList.Count; i++) {
@@ -414,58 +411,40 @@ namespace OpenTraceRT {
                     lock (l) {
                         tempData.Add(tempItem);
                     }
-
                 } );
 
                 threadList.Add(pingThread);
-                pingThread.Start();                
+                pingThread.Start();
             }
 
+            
             Thread checkThread = new Thread(() => CheckThreadsFinished(threadList, token));
-            checkThread.Start();
+            checkThread.Start();            
+
             return;
         }
 
 
         private void CheckThreadsFinished(List<Thread> threadList, CancellationToken token) {
             
-            bool finished = false;
-            Thread.Sleep(3500);
-
-            while (!finished) {
-
                 if (token.IsCancellationRequested) {
 
                     threadList.Clear();
                     return;
                 }
 
-                Thread.Sleep(500);
                 for (int i = 0; i < threadList.Count; i++) {
 
-                    if (threadList[i].IsAlive == true) {
-
-                        break;
-                    }
-                    else {
-
-                        threadList.RemoveAt(i);
-                        i--;
-                    }
-
-                    if (i == threadList.Count - 1) {
-
-                        finished = true;
-                    }
-
+                    threadList[i].Join();
                 }
-            }
+
 #if DEBUG
             Console.WriteLine("\nAll threads finished");
 #endif
             SortList(token);
             dataList.Add(tempData.ToList());
             UpdateUI(this, new PropertyChangedEventArgs("Data"), token);
+
             return;
         }
 
@@ -474,6 +453,7 @@ namespace OpenTraceRT {
 
             try {
                 for (int i = 0; i < tempData.Count; i++) {
+
                     //if not right place
                     if (!tempData[i].hostname.Equals(routeList[i])) {
 
@@ -489,6 +469,7 @@ namespace OpenTraceRT {
                                 tempData[i] = tempData[j];
                                 tempData[j] = (DataItem)tempItem.Clone();
                                 i = 0;
+
                                 break;
                             }
                         }
@@ -523,21 +504,25 @@ namespace OpenTraceRT {
             dataTbl.Clear();
 
             for (int i = 0; i < dataList[dataList.Count -1].Count; i++) {
+
                 tempData.Add(new DataItem {
                     latency = dataList[dataList.Count - 1][i].latency,
                     hostname = dataList[dataList.Count - 1][i].hostname
                 });
             }
+
             if (token.IsCancellationRequested) {
+
                 return;
             }
 
             for (int i = 0; i < dataList.Count; i++) {
 
                 for (int j = 0; j < dataList[i].Count; j++) {
-                    if (dataList[i].Count > j) {
-                        packetLossList.Add(dataList[i][j].packetloss);
 
+                    if (dataList[i].Count > j) {
+
+                        packetLossList.Add(dataList[i][j].packetloss);
                     }
 
                 }
@@ -546,11 +531,15 @@ namespace OpenTraceRT {
             
             int offset = 1;
             int tempSplit = dataList[0].Count;
+
             for (int i = 0; i < packetLossList.Count; i++) {
+
                 int j = 0;
+
                 while (j < tempSplit && (offset * routeList.Count) < dataList[0].Count) {
 
                     if (token.IsCancellationRequested) {
+
                         return;
                     }
 
@@ -574,8 +563,11 @@ namespace OpenTraceRT {
 
 
             if (dataList.Count > 1) {
+
                 for (int i = 0; i < routeList.Count; i++) {
+
                     if (token.IsCancellationRequested) {
+
                         return;
                     }
 
@@ -586,11 +578,14 @@ namespace OpenTraceRT {
 
 
             for (int i = 0; i < tempData.Count; i++) {
+
                 if (token.IsCancellationRequested) {
+
                     return;
                 }
 
                 try {
+
                     latencyList.Add(tempData[i].latency);
                     addRow(new DataItem { jumps = (i + 1).ToString(), latency = tempData[i].latency, hostname = tempData[i].hostname, packetloss = tempData[i].packetloss });
                 }
@@ -672,23 +667,25 @@ namespace OpenTraceRT {
 
 
         private void exitBtn_Click(object sender, RoutedEventArgs e) {
+
             Application.Current.Shutdown();
         }
 
 
         private void saveBtn_Click(object sender, RoutedEventArgs e) {
+
             SaveTrace();
         }
 
 
         private void SaveTrace() {
-            /*
+            
             if (dataList.Count < 1) {
 
                 MessageBox.Show("No data to save");
                 return;
             }
-            */
+            
             Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
 
             dlg.DefaultExt = ".txt";
