@@ -232,7 +232,7 @@ namespace OpenTraceRT {
             Process cmd = SetupTraceRT();
             cmd.Start();
             cmd.BeginOutputReadLine();
-            cmd.StandardInput.WriteLine("tracert " + ip);
+            //cmd.StandardInput.WriteLine("tracert " + ip);
 
             if (token.IsCancellationRequested) {
 
@@ -247,6 +247,7 @@ namespace OpenTraceRT {
 
             ProcessStartInfo cmdStartInfo = new ProcessStartInfo("cmd.exe");
             cmdStartInfo.CreateNoWindow = true;
+            cmdStartInfo.Arguments = "tracert " + ip;
 
             cmdStartInfo.RedirectStandardInput = true;
             cmdStartInfo.RedirectStandardOutput = true;
