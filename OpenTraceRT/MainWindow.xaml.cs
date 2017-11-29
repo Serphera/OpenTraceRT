@@ -506,6 +506,7 @@ namespace OpenTraceRT {
             List<decimal> packetLossList = new List<decimal>();
 
             Dispatcher.Invoke(() => traceData.ItemsSource = null);
+            
             dataTbl.Clear();
 
             for (int i = 0; i < dataList[dataList.Count -1].Count; i++) {
