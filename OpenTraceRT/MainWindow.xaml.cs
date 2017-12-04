@@ -12,6 +12,7 @@ using System.Security;
 using System.Security.Permissions;
 using System.ComponentModel;
 using System.Data;
+using System.Text.RegularExpressions;
 
 namespace OpenTraceRT {
     /// <summary>
@@ -21,8 +22,13 @@ namespace OpenTraceRT {
 
         private bool started = false;
 
-        CancellationTokenSource source = new CancellationTokenSource();
+#if net20
+        private bool cancel = false;
+#endif
+
+        CancellationTokenSource source;
         CancellationToken token;
+
 
         private string ip;
         private List<Thread> Threads = new List<Thread>();
@@ -33,9 +39,9 @@ namespace OpenTraceRT {
         DataTable dataTbl = new DataTable();
         Grapher _grapher;
 
-#if DEBUG
+
         bool disableIntervalPolling = true;
-#endif
+
 
         private List<DataItem> tempData = new List<DataItem>();
         private List<String> routeList = new List<string>();
@@ -54,10 +60,15 @@ namespace OpenTraceRT {
             dataTbl.Columns.Add("Latency");
             dataTbl.Columns.Add("Packet Loss");
 
+            DebugSetup();
 
-#if DEBUG
+        }
+
+        [Conditional("DEBUG")]
+        private void DebugSetup() {
+
             AddPollCheckbox();
-            
+
             //Testing Values!
             //3 Jumps
             //ipInput.Text = "194.22.54.181";
@@ -66,23 +77,21 @@ namespace OpenTraceRT {
             //ipInput.Text = "195.82.50.45";
 
             ipInput.Text = "8.8.8.8";
-
-#endif
         }
+
 
         [Conditional("DEBUG")]
         private void AddPollCheckbox() {
             CheckBox intervalPollBox = new CheckBox();
             intervalPollBox.Content = "Enable Interval Polling";
             intervalPollBox.Margin = new Thickness(5, 5, 0, 2);
-#if DEBUG
+
             intervalPollBox.Click += intervalPollingChecked;
-#endif
+
 
             menuPanel.Children.Add(intervalPollBox);
         }
 
-#if DEBUG
         private void intervalPollingChecked(object sender, RoutedEventArgs e) {
 
             if (((CheckBox)e.OriginalSource).IsChecked == true) {
@@ -94,7 +103,7 @@ namespace OpenTraceRT {
                 disableIntervalPolling = true;
             }
         }
-#endif
+
         private void SetCanvas(object sender, RoutedEventArgs e) {
 
             _grapher = new Grapher(e.Source as Canvas);
@@ -118,24 +127,59 @@ namespace OpenTraceRT {
 
 
         private void OnExit(object sender, EventArgs e) {
-
+#if !net20
             source.Cancel();
+#elif net20
+            cancel = true;
+#endif
+        }
+
+
+
+
+        private void GenerateSource() {
+
+#if Release
+            source.Cancel();            
+            source = new CancellationTokenSource();
+#elif net20
+            cancel = true;
+#endif
+        }
+
+        [Conditional("Release"), Conditional("DEBUG")]
+        private void GenerateToken() {
+
+            token = source.Token;
+        }
+
+
+        private bool CheckIfCancel() {
+            bool isTrue = false;
+
+#if Release || DEBUG
+            isTrue = (token.IsCancellationRequested) ? true : false;
+#elif net20
+            isTrue = (cancel) ? true : false;
+#endif
+
+            return isTrue;
         }
 
 
         private void startBtn_Click(object sender, RoutedEventArgs e) {
 
+            Console.WriteLine("1\n");
             if (PatternChecker.IsValidIP(ipInput.Text)) {
-
+                
                 if (!started && IsWoundDown) {
 
                     SetStart(true);
                     startStopBtn.Content = "Stop";                    
                 }
                 else {
-
-                    source.Cancel();
-                    source = new CancellationTokenSource();
+                    
+                    GenerateSource();
                     startStopBtn.Content = "Start";
                     SetStart(false);
                     return;
@@ -144,7 +188,7 @@ namespace OpenTraceRT {
                 if (IsWoundDown) {
                     
                     ip = ipInput.Text;
-                    token = source.Token;
+                    GenerateToken();
                     string interval = GetInterval(pollInterval.Text);
 
                     Thread startThread = new Thread(() => StartPoll(interval));
@@ -165,11 +209,11 @@ namespace OpenTraceRT {
             Thread checkActiveThreads = new Thread(() => CheckThreadsClosed());
             checkActiveThreads.Start();
 
-            Thread pollThread = new Thread(() => Polling(interval, token));
+            Thread pollThread = new Thread(() => Polling(interval));
             Threads.Add(pollThread);
             pollThread.Start();
 
-            Thread isCompleteThread = new Thread(() => TraceComplete((Convert.ToInt32(interval) * 1000), token));
+            Thread isCompleteThread = new Thread(() => TraceComplete((Convert.ToInt32(interval) * 1000)));
             Threads.Add(isCompleteThread);
             isCompleteThread.Start();
 
@@ -179,7 +223,7 @@ namespace OpenTraceRT {
 
         private bool CheckThreadsClosed() {
 
-            while (!token.IsCancellationRequested) {
+            while (CheckIfCancel()) {
                 Thread.Sleep(500);
             }
 
@@ -222,19 +266,20 @@ namespace OpenTraceRT {
         }
 
 
-        private void Polling(string interval, CancellationToken token) {
-            GetTrace(token);
+        private void Polling(string interval) {
+            GetTrace();
         }
 
 
-        private void GetTrace(CancellationToken token) {
-
+        private void GetTrace() {
+            
             Process cmd = SetupTraceRT();
             cmd.Start();
             cmd.BeginOutputReadLine();
+            
             //cmd.StandardInput.WriteLine("tracert " + ip);
 
-            if (token.IsCancellationRequested) {
+            if (CheckIfCancel()) {
 
                 cmd.Dispose();
             }
@@ -247,7 +292,7 @@ namespace OpenTraceRT {
 
             ProcessStartInfo cmdStartInfo = new ProcessStartInfo("cmd.exe");
             cmdStartInfo.CreateNoWindow = true;
-            cmdStartInfo.Arguments = "tracert " + ip;
+            cmdStartInfo.Arguments = "/C \" tracert " + ip;
 
             cmdStartInfo.RedirectStandardInput = true;
             cmdStartInfo.RedirectStandardOutput = true;
@@ -266,7 +311,7 @@ namespace OpenTraceRT {
         //Sorts through tracerts output to find lines with IP and the Trace complete message
         private void cmd_DataReceieved(object sender, DataReceivedEventArgs e) {
 
-            if (token.IsCancellationRequested) {
+            if (CheckIfCancel()) {
 
                 return;
             }
@@ -274,7 +319,7 @@ namespace OpenTraceRT {
 
                 if (e.Data[0] == ' ' || e.Data[4] == 'e') {
 
-                    ParseData(e.Data, token);
+                    ParseData(e.Data);
                 }
 
             }
@@ -282,75 +327,32 @@ namespace OpenTraceRT {
         }
 
 
-        private void ParseData(string data, CancellationToken token) {
+        private void ParseData(string data) {
 
             StringBuilder sb = new StringBuilder();
             StringReader sr = new StringReader(data);
-            sb.Append(sr.ReadToEnd());
+            sb.Append(sr.ReadLine());
 
-            if (PatternChecker.IsTraceComplete(sb.ToString()) && token.IsCancellationRequested == false) {
+            if (PatternChecker.IsTraceComplete(sb.ToString()) && CheckIfCancel()) {
 
+                Console.WriteLine("trace complete");
                 Dispatcher.Invoke(() => ClearGrid());
                 IsTraceComplete = true;
                 return;
             }
 
             List<String> tempList = new List<string>();
-            int dataValue = 0;
 
-            //Captures IPs and excludes latency and non-numerical IPs
-            for (int i = 0; i < sb.Length; i++) {
+            MatchCollection matches = Regex.Matches(sb.ToString(), @"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}");
 
-                if (token.IsCancellationRequested) {
+            if (matches.Count > 0) {
+                foreach (var item in matches) {
 
-                    return;
-                }
-                if (sb[i] != ' ' && sb[i] != '<' && sb[i] != '[') {
-
-                    StringBuilder sb2 = new StringBuilder();
-                    while (sb[i] != '*') {
-                    
-                        if (token.IsCancellationRequested) {
-
-                            return;
-                        }
-                        if (sb.Length > i + 1) {
-
-                            if (sb[i + 1] == ' ') {
-
-                                if (dataValue == 7 || dataValue == 8) {
-
-                                    if (sb[i] != ']') {
-
-                                        sb2.Append(sb[i].ToString());
-                                    }
-                                    if (PatternChecker.IsValidIP(sb2.ToString())) {
-
-                                        tempList.Add(sb2.ToString());
-                                    }
-                                }
-                                dataValue += 1;
-                                break;
-                            }
-
-                            if (dataValue == 7 || dataValue == 8) {
-
-                                sb2.Append(sb[i].ToString());
-                            }
-                            i++;
-                        }
-
-                    }
-
-                    if (sb[i] == '*') {
-
-                        if (dataValue == 1 || dataValue == 3) {
-
-                            dataValue += 2;
-                        }
-                    }
+                    tempList.Add(item.ToString());
                 }
             }
+            
+
 
             if (tempList.Count > 0) {
 
@@ -360,11 +362,11 @@ namespace OpenTraceRT {
         }
 
 
-        private void TraceComplete(int interval, CancellationToken token) {
+        private void TraceComplete(int interval) {
 
             Thread.Sleep(5000);
 
-            while (!IsTraceComplete && !token.IsCancellationRequested) {
+            while (!IsTraceComplete && CheckIfCancel()) {
 
                 Thread.Sleep(1000);
 
@@ -372,15 +374,15 @@ namespace OpenTraceRT {
 #if DEBUG
             if (!disableIntervalPolling) {
 #endif
-                while (!token.IsCancellationRequested) {
+                while (!CheckIfCancel()) {
 
-                    StartRoutePing(token);
+                    StartRoutePing();
                     Thread.Sleep(interval);
                 }
 #if DEBUG
             }
 
-            else if (!token.IsCancellationRequested) {
+            else if (!CheckIfCancel()) {
                 StartRoutePing(token);
             }
 #endif
@@ -388,7 +390,7 @@ namespace OpenTraceRT {
         }
 
 
-        private void StartRoutePing(CancellationToken token) {
+        private void StartRoutePing() {
 
             List<Thread> threadList = new List<Thread>();            
             
@@ -396,7 +398,7 @@ namespace OpenTraceRT {
 
             for (int i = 0; i < routeList.Count; i++) {
 
-                if (token.IsCancellationRequested) {
+                if (CheckIfCancel()) {
                     return;
                 }
 
@@ -419,16 +421,16 @@ namespace OpenTraceRT {
             }
 
             
-            Thread checkThread = new Thread(() => CheckThreadsFinished(threadList, token));
+            Thread checkThread = new Thread(() => CheckThreadsFinished(threadList));
             checkThread.Start();            
 
             return;
         }
 
 
-        private void CheckThreadsFinished(List<Thread> threadList, CancellationToken token) {
+        private void CheckThreadsFinished(List<Thread> threadList) {
             
-                if (token.IsCancellationRequested) {
+                if (CheckIfCancel()) {
 
                     threadList.Clear();
                     return;
@@ -442,20 +444,21 @@ namespace OpenTraceRT {
 #if DEBUG
             Console.WriteLine("\nAll threads finished");
 #endif
-            SortList(token);
+            Console.WriteLine("\nAll threads finished");
+            SortList();
             dataList.Add(tempData.ToList());
-            UpdateUI(this, new PropertyChangedEventArgs("Data"), token);
+            UpdateUI(this, new PropertyChangedEventArgs("Data"));
 
             return;
         }
 
 
-        private void SortList(CancellationToken token) {
+        private void SortList() {
 
             try {
                 for (int i = 0; i < tempData.Count; i++) {
 
-                    if (token.IsCancellationRequested) {
+                    if (CheckIfCancel()) {
 
                         return;
                     }
@@ -465,7 +468,7 @@ namespace OpenTraceRT {
 
                         for (int j = 0; j < routeList.Count; j++) {
 
-                            if (token.IsCancellationRequested) {
+                            if (CheckIfCancel()) {
                                 return;
                             }
 
@@ -499,7 +502,7 @@ namespace OpenTraceRT {
         }
 
 
-        private void UpdateUI(object sender, PropertyChangedEventArgs e, CancellationToken token) {
+        private void UpdateUI(object sender, PropertyChangedEventArgs e) {
 
             tempData.Clear();
 
@@ -518,7 +521,7 @@ namespace OpenTraceRT {
                 });
             }
 
-            if (token.IsCancellationRequested) {
+            if (CheckIfCancel()) {
 
                 return;
             }
@@ -545,7 +548,7 @@ namespace OpenTraceRT {
 
                 while (j < tempSplit && (offset * routeList.Count) < dataList[0].Count) {
 
-                    if (token.IsCancellationRequested) {
+                    if (CheckIfCancel()) {
 
                         return;
                     }
@@ -573,7 +576,7 @@ namespace OpenTraceRT {
 
                 for (int i = 0; i < routeList.Count; i++) {
 
-                    if (token.IsCancellationRequested) {
+                    if (CheckIfCancel()) {
 
                         return;
                     }
@@ -586,7 +589,7 @@ namespace OpenTraceRT {
 
             for (int i = 0; i < tempData.Count; i++) {
 
-                if (token.IsCancellationRequested) {
+                if (CheckIfCancel()) {
 
                     return;
                 }

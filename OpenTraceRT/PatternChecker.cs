@@ -7,9 +7,13 @@ using System.Text.RegularExpressions;
 
 namespace OpenTraceRT {
     static class PatternChecker {
-        public static bool IsValidIP(string input) {         
+        public static bool IsValidIP(string input) {
+            //string pattern = @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b";
+            string pattern = @"^[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}";
+            
+
             //string hostPattern = @"^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$"; ;
-            if (!CheckPattern(input, @"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b")) {
+            if (!CheckPattern(input, pattern)) {
 #if DEBUG
                 Console.WriteLine("Invalid Input");
 #endif
@@ -28,7 +32,9 @@ namespace OpenTraceRT {
         private static bool CheckPattern(string input, string pattern) {
             bool isValid = true;
             Regex rgx = new Regex(pattern);
+
             if (!rgx.IsMatch(input)) {
+
                 isValid = false;
             }
             return isValid;
